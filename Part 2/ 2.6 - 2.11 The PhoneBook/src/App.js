@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Persons from './components/Persons'
 import PersonForm from './components/PersonForm'
 import Filter from './components/Filter'
+import axios from 'axios'
 
 //Hi, Mr Professor Matti Luukkkainen, I hope you don't mind the comments in my work,
 // I commented almost everything for future reference when i am reviewing the code so I don't get confused
@@ -10,12 +11,7 @@ import Filter from './components/Filter'
 const App = () => {
 
   //Declaration of persons state
-  const [ persons, setPersons ] = useState([
-    { name: 'Arto Hellas', phone: '040-123456' },
-    { name: 'Ada Lovelace', phone: '39-44-5323523' },
-    { name: 'Dan Abramov', phone: '12-43-234345' },
-    { name: 'Mary Poppendieck', phone: '39-23-6423122' }
-  ])
+  const [ persons, setPersons ] = useState([]) //Initial persons will now be filled once get request is complete
 
   //Declaration of values for onchange States for the forms inputs
   const [ newName, setNewName ] = useState('')
@@ -26,6 +22,13 @@ const App = () => {
   //Declaration of events when the input values change
   const nameChange = (e)=>setNewName(e.target.value)
   const phoneChange = (e)=>setNewPhone(e.target.value)
+
+  useEffect(() => {
+    axios.get('http://localhost:3001/persons').then((response)=>{
+      setPersonsToShow(response.data)
+      setPersons(response.data)
+    })
+  }, []) //UseEffect triggered when the component refreshes, adding a second argument makes it trigger only when it refreshes for the first time
 
   //Declaration of event for when a new person is added from the form
   const addPerson = (e) => {
