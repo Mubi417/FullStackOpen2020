@@ -44,6 +44,7 @@ const App = () => {
       if (window.confirm(`${personObject.name} is already added to phonebook, replace number?`)) {
 
         const id = persons.filter((person) => person.name === personObject.name)[0].id
+        console.log(id)
 
         phoneNumbers.updateOne(id, personObject).then((data)=>{
           setAndRemoveMessage(`${data.name}'s contact has been updated successfully`)
@@ -61,8 +62,8 @@ const App = () => {
         setAndRemoveMessage(`${data.name}'s contact has been Added`)
         setPersons(persons.concat(data))
         setPersonsToShow(personsToShow.concat(data))
-      }).catch(()=>{
-        setAndRemoveMessage('An error occured, please try again!!', true)
+      }).catch((error)=>{
+        setAndRemoveMessage(error.response.data.error || 'An error occured, please try again!!', true)
       })
 
     }
