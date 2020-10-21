@@ -27,12 +27,19 @@ const initialBlogList = [
     }
 ]
 
+const userData = {
+    username: 'superuser',
+    password: '123456',
+    name: 'mubi'
+}
+
 const getBlogsFromDb = async () => {
     const blogs = await Blog.find({})
-    return blogs.map(note => note.toJSON())
+    return blogs.map(blog => blog.toJSON())
 }
 
 module.exports = {
     initialBlogList,
-    getBlogsFromDb
+    getBlogsFromDb,
+    userData
 }

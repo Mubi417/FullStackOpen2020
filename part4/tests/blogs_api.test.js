@@ -2,15 +2,22 @@ const supertest = require('supertest')
 const app = require('../app')
 const helper = require('./api_test_helper')
 const Blog = require('../models/blogs')
+const User = require('../models/users')
 const mongoose = require('mongoose')
 
 const api = supertest(app)
+var auth
 
 beforeAll(async () => {
     await Blog.deleteMany({})
-    const blogObjects = helper.initialBlogList.map(blog => new Blog(blog))
-    const promiseArray = blogObjects.map(blog => blog.save())
-    await Promise.all(promiseArray)
+    await User.deleteMany({})
+    await api.post('/api/users').send(helper.userData)
+    const result = await api.post('/api/login').send(helper.userData)
+    auth = result.body.token
+    for (const blog of helper.initialBlogList) {
+        await api.post('/api/blogs').send(blog)
+            .set('Authorization', `Bearer ${auth}`)
+    }
 })
 
 describe('Testing My API', () => {
@@ -30,11 +37,28 @@ describe('Testing My API', () => {
             url: 'pjkss.com',
             likes: 520
         }
-        await api.post('/api/blogs').send(newBlog).expect(201).expect('Content-Type', /application\/json/)
+        await api.post('/api/blogs').send(newBlog)
+            .set('Authorization', `Bearer ${auth}`)
+            .expect(201).expect('Content-Type', /application\/json/)
 
         const blogs = await helper.getBlogsFromDb()
 
         expect(blogs).toHaveLength(helper.initialBlogList.length+1)
+    })
+
+    test('confirm blog is not added if no authorization', async () => {
+        const newBlog = {
+            title: 'Papa Joe',
+            author: 'Alan Smith',
+            url: 'pjkss.com',
+            likes: 520
+        }
+        await api.post('/api/blogs').send(newBlog)
+            .expect(401).expect('Content-Type', /application\/json/)
+
+        const blogs = await helper.getBlogsFromDb()
+
+        expect(blogs).toHaveLength(helper.initialBlogList.length)
     })
 
     test('confirm blog likes default to 0 if ommitted', async () => {
@@ -65,7 +89,7 @@ describe('deletion of a note', () => {
         const blogsAtStart = await helper.getBlogsFromDb
         const blogToDelete = blogsAtStart[0]
   
-        await api.delete(`/api/notes/${blogToDelete.id}`).expect(204)
+        await api.delete(`/api/notes/${blogToDelete.id}`).set('Authorization', `Bearer ${auth}`).expect(204)
   
         const blogsAtEnd = await helper.getBlogsFromDb
   
